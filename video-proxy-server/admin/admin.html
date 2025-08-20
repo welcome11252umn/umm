@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin - Upload</title>
+<style>body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial;padding:20px;background:#111;color:#eee}form{display:flex;flex-direction:column;gap:8px;width:420px}input,textarea,button{padding:8px;border-radius:6px;border:0}button.publish{background:#22c55e;color:#012}button.cancel{background:#ef4444;color:#fff}</style>
+</head>
+<body>
+<h1>Upload Video</h1>
+<form id="uploadForm">
+  <label>Video File:</label><input type="file" id="videoFile" name="file" accept="video/*" required>
+  <label>Title:</label><input type="text" id="title" name="title" placeholder="Video Title" required>
+  <label>Description:</label><textarea id="desc" name="description" rows="4" placeholder="Description"></textarea>
+  <div style="display:flex;gap:8px"><button class="publish" type="submit">Publish</button><button type="button" class="cancel" onclick="document.getElementById('uploadForm').reset()">Cancel</button></div>
+</form>
+<div id="status"></div>
+<script>
+const form=document.getElementById('uploadForm'),status=document.getElementById('status');
+form.addEventListener('submit',async e=>{e.preventDefault();const f=document.getElementById('videoFile').files[0];if(!f)return alert('Select file');const fd=new FormData();fd.append('file',f);fd.append('title',document.getElementById('title').value);fd.append('description',document.getElementById('desc').value);status.textContent='Uploading...';try{const res=await fetch('/admin/upload',{method:'POST',body:fd});const j=await res.json();if(res.ok){status.textContent='Uploaded! ID: '+j.id;form.reset();}else{status.textContent='Error: '+(j.error||JSON.stringify(j));}}catch(err){status.textContent='Network error: '+err;} });
+</script>
+</body>
+</html>
