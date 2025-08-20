@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Video Directory - 2embed-like</title>
+  <link rel="stylesheet" href="/player/player.css">
+</head>
+<body>
+  <header class="site-header">
+    <h1>Video Directory (Demo)</h1>
+    <p>Click "Add to Mainframe" to prefetch to your mainframe server, then click Play.</p>
+  </header>
+
+  <main id="grid" class="grid">
+    <!-- Items injected by main.js -->
+  </main>
+
+  <template id="card">
+    <article class="card">
+      <img class="thumb" src="" alt="thumb"/>
+      <h3 class="title"></h3>
+      <div class="actions">
+        <button class="add">Add to Mainframe</button>
+        <a class="play" target="_blank" rel="noopener">Play</a>
+      </div>
+    </article>
+  </template>
+
+  <script>
+    // sample video list (replace URLs with actual sources you have access to)
+    const VIDEOS = [
+      {
+        "title": "Big Buck Bunny (sample)",
+        "thumb": "https://peach.blender.org/wp-content/uploads/title_anouncement.jpg",
+        "source": "https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_320x180.mp4"
+      },
+      {
+        "title": "Sintel (sample)",
+        "thumb": "https://durian.blender.org/wp-content/uploads/2010/05/sintel_post.jpg",
+        "source": "https://media.w3.org/2010/05/sintel/trailer.mp4"
+      }
+    ];
+
+    const MAINFRAME = location.hostname === '127.0.0.1' || location.hostname === 'localhost'
+      ? 'http://localhost:4000' // default mainframe local dev
+      : 'https://' + location.hostname.replace(/^www\./, '') + ':4000'; // placeholder; edit if needed
+
+    function build() {
+      const grid = document.getElementById('grid');
+      const tpl = document.getElementById('card');
+      VIDEOS.forEach((v, i) => {
+        const el = tpl.content.cloneNode(true);
+        el.querySelector('.thumb').src = v.thumb;
+        el.querySelector('.title').textContent = v.title;
+        const addBtn = el.querySelector('.add');
+        const playLink = el.querySelector('.play');
+        addBtn.addEventListener('click', async () => {
+          addBtn.disabled = true;
+          addBtn.textContent = 'Adding...';
+          try {
+            const res = await fetch(MAINFRAME + '/add?url=' + encodeURIComponent(v.source));
+            const j = await res.json();
+            if (res.ok && j.id) {
+              addBtn.textContent = 'Added';
+              playLink.href = MAINFRAME + '/watch/' + j.id;
+              playLink.textContent = 'Play';
+            } else {
+              addBtn.textContent = 'Error';
+              alert('Add failed: ' + (j.error || JSON.stringify(j)));
+            }
+          } catch (e) {
+            addBtn.textContent = 'Error';
+            alert('Network error: ' + e);
+          }
+        });
+        playLink.href = MAINFRAME + '/watch/temp?url=' + encodeURIComponent(v.source);
+        playLink.textContent = 'Play (no prefetch)';
+        grid.appendChild(el);
+      });
+    }
+
+    build();
+  </script>
+</body>
+</html>
